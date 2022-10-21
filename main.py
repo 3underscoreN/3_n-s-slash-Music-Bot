@@ -1,5 +1,4 @@
 import logging
-from ssl import Options
 import discord
 import os
 import music
@@ -16,7 +15,7 @@ logging.basicConfig(
     datefmt = '%m/%d/%Y %I:%M:%S %p'
 )
 
-cogs = [music.music()]
+cogs = [music]
 for i in range(len(cogs)):
     cogs[i].setup(bot)
 
