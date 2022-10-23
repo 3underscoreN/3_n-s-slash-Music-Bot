@@ -176,11 +176,15 @@ class music(commands.Cog):
             await ctx.respond(embed = embed)
             logging.warn(f"{ctx.author} tried to run /queue but there are no songs in the queue.")
         else:
-            embed = discord.Embed(title = "Queue", color = 0x0000ff)
-            embed.add_field(name = "Now playing", value = f"`{songQueue.current[0].title}`\nRequested by {songQueue.current[1].mention}", inline = False)
+            embed = discord.Embed(title = "Queue", color = 0x00f552)
+            embed.add_field(name = "Now playing", value = f"[{songQueue.current[0].title}](https://youtube.com/watch?v={songQueue.current[0].videoid})\nDuration: {songQueue.current[0].duration}\nRequested by {songQueue.current[1].mention}", inline = False)
             embed.set_footer(text = "queue · Bot made by 3_n#7069")
             if songQueue.length() > 0:
-                embed.add_field(name = "Up next", value = "\n\n".join([f"**{i + 1}**: [{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}" for i in range(songQueue.length())]), inline = False)
+                embed.add_field(
+                    name = "Up next", 
+                    value = "\n\n".join([f"**{i + 1}**: [{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}" for i in range(songQueue.length())]), 
+                    inline = False
+                )
                 total_queue_length = sum([songQueue.queue[i][0].length for i in range(songQueue.length())])
                 embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ")
             await ctx.respond(embed = embed)
