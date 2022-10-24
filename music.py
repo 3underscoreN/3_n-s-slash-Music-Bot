@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.pages import Paginator, PaginatorButton
 import pafy
 import logging
 import re
@@ -41,18 +42,58 @@ class queue():
         return len(self.queue)
 
 songQueue = queue()
-    
+
+def playnext(ctx):
+    if songQueue.length() == 0:
+        songQueue.reset()
+        return
+    song = songQueue.next()
+    ctx.voice_client.play(discord.FFmpegOpusAudio(song[0].getbestaudio().url, **FFMPEG_OPTIONS), after=lambda e: playnext(ctx))
+
+class playButton(PaginatorButton):
+    def __init__(self, ctx, result):
+        super().__init__("page_indicator", style = discord.ButtonStyle.green)
+        self.ctx = ctx
+        self.result = result
+
+    async def callback(self, interaction: discord.Interaction):
+        index = self.paginator.current_page
+        # plays the song (not using invoke(play) sice that pollutes stuff)
+        url = "https://youtube.com" + self.result[index]["url_suffix"]
+        item = pafy.new(url)
+        if self.ctx.voice_client is None:
+            await self.ctx.author.voice.channel.connect()
+
+        if self.ctx.voice_client.is_playing():
+            queuePos = songQueue.add(item, self.ctx.author)
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "play",
+                fields = [
+                    {"name": "Added to queue", "value": f"Your song `{item.title}` has been added with a position of `{queuePos}`.", "inline": False},
+                    {"name": "Pro tip!", "value": "The buttons below can still be used to nevigete the search query.", "inline": False}
+                ]
+            )
+        else:
+            songQueue.current = [item, self.ctx.author]
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "play",
+                fields = [
+                    {"name": "Playing", "value": f"Now playing `{item.title}`.", "inline": False},
+                    {"name": "Pro tip!", "value": "The buttons below can still be used to nevigete the search query.", "inline": False}
+                ]
+            )
+            self.ctx.voice_client.play(discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS), after = lambda e: playnext(self.ctx))
+        await interaction.response.defer()
+        await self.ctx.edit(embed = embed)
+
 
 class music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-
-    def playnext(self, ctx):
-        if songQueue.length() == 0:
-            songQueue.reset()
-            return
-        song = songQueue.next()
-        ctx.voice_client.play(discord.FFmpegOpusAudio(song[0].getbestaudio().url, **FFMPEG_OPTIONS), after=lambda e: self.playnext(ctx))
 
     @commands.slash_command(name = "musicsysrun", description = "Runs a simple command in music.py. Used for debugging.")
     async def musicsysrun(self, ctx, command:str):
@@ -131,7 +172,7 @@ class music(commands.Cog):
             if ctx.voice_client.channel == ctx.author.voice.channel:
                 await ctx.voice_client.disconnect()
                 songQueue.reset()
-                embed = embedPackaging.packEmbed(
+                embed = await embedPackaging.packEmbed(
                     title = "Success",
                     embedType = "success",
                     command = "leave",
@@ -213,7 +254,7 @@ class music(commands.Cog):
         else: # if the bot is not playing anything, play the song
             songQueue.current = [item, ctx.author]
             source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
-            ctx.voice_client.play(source, after = lambda e: self.playnext(ctx))
+            ctx.voice_client.play(source, after = lambda e: playnext(ctx))
             embed = await embedPackaging.packEmbed(
                 title = "Success",
                 embedType = "success",
@@ -390,11 +431,36 @@ class music(commands.Cog):
             await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /resume but the bot is not paused.")
 
-    @commands.slash_command(name = "repeat", description = "Check the current repeat mode, or set it to a new specific mode.")
-    @discord.option("mode", str, required = False, description = "The mode to set the repeat to.", choices = ["off", "single", "queue"])
-    async def repeat(self, ctx, mode:str):
-        pass
+    @commands.slash_command(name = "search", description = "Searches on YouTube and displays the results.")
+    @discord.option("query", str, description = "The query to search on YouTube.", required = True)
+    async def search(self, ctx, query: str):
+        await ctx.defer()
+        result = YoutubeSearch(query, max_results = 5).to_dict()
+        embeds = []
+        for i in range(len(result)):
+            this_embed = await embedPackaging.packEmbed(
+                    title = f"Search result {i + 1}:",
+                    embedType = "info",
+                    command = "search",
+                    fields = [
+                        {"name": "Title", "value": f"[{result[i]['title']}](https://youtube.com{result[i]['url_suffix']})", "inline": False},
+                        {"name": "Duration", "value": result[i]["duration"], "inline": False},
+                        {"name": "Pro Tip!", "value": f"Click the **green button** to play the song/add the song to queue!\n**NOTE!** The buttons will time out in 60 seconds and it will be unavailable after timeout.", "inline": True}
+                    ]
+                )
+            this_embed.set_thumbnail(url = result[i]["thumbnails"][0])
+            embeds.append(this_embed)
+        
+        paginator = Paginator(embeds, timeout = 60, use_default_buttons = False)
+        paginator.add_button(PaginatorButton("first", label = "⏪", style = discord.ButtonStyle.grey))
+        paginator.add_button(PaginatorButton("prev", label="◀️", style=discord.ButtonStyle.blurple))
+        paginator.add_button(playButton(ctx = ctx, result = result))
+        paginator.add_button(PaginatorButton("next", label="▶️", style=discord.ButtonStyle.blurple))
+        paginator.add_button(PaginatorButton("last", label="⏩", style=discord.ButtonStyle.grey))
+        await paginator.respond(ctx.interaction, ephemeral = True)
 
+
+        
 
 def setup(bot):
     bot.add_cog(music(bot))
