@@ -433,9 +433,10 @@ class music(commands.Cog):
 
     @commands.slash_command(name = "search", description = "Searches on YouTube and displays the results.")
     @discord.option("query", str, description = "The query to search on YouTube.", required = True)
-    async def search(self, ctx, query: str):
+    @discord.option("items_to_display", description = "The number of items to display.", required = False, default = 5, min_value = 1, max_value = 20)
+    async def search(self, ctx, query: str, items_to_display:int):
         await ctx.defer()
-        result = YoutubeSearch(query, max_results = 5).to_dict()
+        result = YoutubeSearch(query, max_results = items_to_display).to_dict()
         embeds = []
         for i in range(len(result)):
             this_embed = await embedPackaging.packEmbed(

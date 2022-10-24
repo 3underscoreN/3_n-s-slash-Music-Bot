@@ -1,4 +1,3 @@
-from ctypes import Union
 import logging
 import discord
 import orjson
