@@ -60,7 +60,7 @@ class music(commands.Cog):
                 exec(f'print({command})')
                 embed = discord.Embed(title = "Success", color = 0x00ff00)
                 embed.add_field(name = "Your instruction has been executed.",value = "Please check output in the console.", inline = False)
-                embed.set_footer(text = "sysrun · Bot made by 3_n#706")
+                embed.set_footer(text = "sysrun · Bot made by 3_n#7069")
             except Exception as e:
                 embed = discord.Embed(title = "Error", color = 0xff0000)
                 embed.add_field(name = "Your instruction has NOT been executed.", value = f"There is an error in running your command.\nOriginal message: `{repr(e)}`", inline = False)
@@ -69,7 +69,7 @@ class music(commands.Cog):
             embed.add_field(name = "You cannot use the command.", value = "Only owner can use this command.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
             embed.set_footer(text = "shutdown · Bot made by 3_n#7069")
             logging.warn("Bot sysrun command was used by non-owner.")
-        await ctx.respond(embed = embed)
+        await ctx.respond(embed = embed, ephemeral = True)
 
     @commands.slash_command(name = "join", description = "Joins the voice channel you are in.")
     async def join(self, ctx):
@@ -78,7 +78,7 @@ class music(commands.Cog):
                 embed = discord.Embed(title = "Error: Not in voice channel", color = 0xff0000)
                 embed.add_field(name = "You are not in a voice channel.", value = "Please join a voice channel and try again.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
                 embed.set_footer(text = "join · Bot made by 3_n#7069")
-                await ctx.respond(embed = embed)
+                await ctx.respond(embed = embed, ephemeral = True)
                 logging.warn(f"{ctx.author} tried to run /join but was not in any voice channel.")
             else:
                 await ctx.author.voice.channel.connect()
@@ -90,7 +90,7 @@ class music(commands.Cog):
             embed = discord.Embed(title = "Error: Already in voice channel", color = 0xff0000)
             embed.add_field(name = "It looks like I am in another voice channel.", value = f"Maybe you can try to move to that {ctx.voice_client.channel}.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
             embed.set_footer(text = "join · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /join but the bot is already in {ctx.voice_client.channel}.")
 
     @commands.slash_command(name = "leave", description = "Leaves the voice channel you are in.")
@@ -100,30 +100,27 @@ class music(commands.Cog):
                 await ctx.voice_client.disconnect()
                 songQueue.reset()
                 embed = discord.Embed(title = "Success", color = 0x00ff00)
-                embed.add_field(name = "Left Voice Channel", value = f"Left `{ctx.author.voice.channel.name}`. You can always do `/join` to get me back in!", inline = False)
+                embed.add_field(name = "Left Voice Channel", value = f"Left `{ctx.author.voice.channel.name}` (by the way I also cleared the current queue.). You can always do `/join` to get me back in!", inline = False)
                 embed.set_footer(text = "leave · Bot made by 3_n#7069")
                 await ctx.respond(embed = embed)
             else:
                 embed = discord.Embed(title = "Error: Not in same voice channel", color = 0xff0000)
                 embed.add_field(name = "Not in same voice channel", value = f"It looks like you are not in the same voice channel as me.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
                 embed.set_footer(text = "leave · Bot made by 3_n#7069")
-                await ctx.respond(embed = embed)
+                await ctx.respond(embed = embed, ephemeral = True)
                 logging.warn(f"{ctx.author} tried to run /leave but is not in the same voice channel as the bot.")
         except AttributeError:
             embed = discord.Embed(title = "Error: Not in voice channel", color = 0xff0000)
             embed.add_field(name = "It looks like I am not in any voice channels.", value = f"If I am not in any voice channel, I can't leave any voice channels!\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
             embed.set_footer(text = "leave · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /leave but the bot is not in any voice channel.")
 
     @commands.slash_command(name = "play", description = "Plays a song from YouTube.")
     @discord.option("url_or_keyword", str, description = "The song you want to play, either in URL or in keyword", required = True)
     async def play(self, ctx, url_or_keyword:str):
         global songQueue
-        embed = discord.Embed(title = "Loading...", color = 0x0000ff)
-        embed.add_field(name = "Please wait while the command is being processed...", value = "This may take a while. If you found it stuck in this dialog, there might be an internal error. Please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot) if you do think something's wrong.", inline = False)
-        embed.set_footer(text = "play · Bot made by 3_n#7069")
-        message = await ctx.respond(embed = embed)
+        await ctx.defer()
 
         # join the voice channel if the bot is not in any voice channel
         if ctx.voice_client is None:
@@ -144,7 +141,7 @@ class music(commands.Cog):
             embed = discord.Embed(title = "Error: Invalid Video", color = 0xff0000)
             embed.add_field(name = "The video you provided is invalid.", value = "Please make sure you are providing a valid video URL or a valid keyword.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
             embed.set_footer(text = "play · Bot made by 3_n#7069")
-            await message.edit_original_response(embed = embed)
+            await ctx.send_followup(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /play but provided an invalid video URL or keyword.")
             return
         
@@ -155,7 +152,7 @@ class music(commands.Cog):
             embed.add_field(name = "Added to queue", value = f"Your song `{item.title}` has been added with a position of `{queuePos}`.", inline = False)
             embed.set_thumbnail(url = item.thumb)
             embed.set_footer(text = "play · Bot made by 3_n#7069")
-            await message.edit_original_response(embed = embed)
+            await ctx.send_followup(embed = embed)
         else:
             songQueue.current = [item, ctx.author]
             source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
@@ -164,7 +161,7 @@ class music(commands.Cog):
             embed.add_field(name = "Now playing", value = f"Your song `{item.title}` should be played instantly.", inline = False)
             embed.set_thumbnail(url = item.thumb)
             embed.set_footer(text = "play · Bot made by 3_n#7069")
-            await message.edit_original_response(embed = embed)
+            await ctx.send_followup(embed = embed)
 
     @commands.slash_command(name = "queue", description = "Shows the current queue.")
     async def queue(self, ctx):
@@ -190,7 +187,7 @@ class music(commands.Cog):
             await ctx.respond(embed = embed)
     
     @commands.slash_command(name = "skip", description = "Skips a specific song in the queue. If no index is provided, the bot will skip the current song.")
-    @discord.option("index", int, description = "The index of the song you want to skip.", required = False)
+    @discord.option("index", int, description = "The index of the song you want to skip.", required = False, min_value = 1)
     async def skip(self, ctx, index:int):
         global songQueue
         if songQueue.current is None:
@@ -205,7 +202,7 @@ class music(commands.Cog):
             embed.add_field(name = "Skipped", value = f"The currently playing song has been skipped.", inline = False)
             embed.set_footer(text = "skip · Bot made by 3_n#7069")
             await ctx.respond(embed = embed)
-        elif index < 1 or index > songQueue.length():
+        elif index > songQueue.length():
             embed = discord.Embed(title = "Error: Invalid index", color = 0xff0000)
             embed.add_field(name = "The index you provided is invalid.", value = "Please make sure you are providing a valid index.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
             embed.set_footer(text = "skip · Bot made by 3_n#7069")
@@ -216,6 +213,50 @@ class music(commands.Cog):
             embed = discord.Embed(title = "Success", color = 0x00ff00)
             embed.add_field(name = "Skipped", value = f"The song at index `{index}`,  {RemovedSong[0].title} has been skipped.", inline = False)
             embed.set_footer(text = "skip · Bot made by 3_n#7069")
+            await ctx.respond(embed = embed)
+
+    @commands.slash_command(name = "stop", description = "Stops the bot and clears the queue.")
+    async def stop(self, ctx):
+        global songQueue
+        if songQueue.current is None:
+            embed = discord.Embed(title = "Error: No songs in queue", color = 0xff0000)
+            embed.add_field(name = "There are no songs in the queue.", value = "Please play a song first before stopping.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
+            embed.set_footer(text = "stop · Bot made by 3_n#7069")
+            await ctx.respond(embed = embed)
+        else:
+            songQueue.reset()
+            ctx.voice_client.stop()
+            embed = discord.Embed(title = "Success", color = 0x00ff00)
+            embed.add_field(name = "Stopped", value = f"The bot has been stopped and the queue has been cleared.", inline = False)
+            embed.set_footer(text = "stop · Bot made by 3_n#7069")
+            await ctx.respond(embed = embed)
+
+    @commands.slash_command(name = "pause", description = "Pauses the currently playing song.")
+    async def pause(self, ctx):
+        if ctx.voice_client.is_paused():
+            embed = discord.Embed(title = "Error: Already paused", color = 0xff0000)
+            embed.add_field(name = "The bot is already paused.", value = "Please make sure the bot is not paused before pausing.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
+            embed.set_footer(text = "pause · Bot made by 3_n#7069")
+            await ctx.respond(embed = embed)
+        else:
+            ctx.voice_client.pause()
+            embed = discord.Embed(title = "Success", color = 0x00ff00)
+            embed.add_field(name = "Paused", value = f"The bot has been paused.", inline = False)
+            embed.set_footer(text = "pause · Bot made by 3_n#7069")
+            await ctx.respond(embed = embed)
+
+    @commands.slash_command(name = "resume", description = "Resumes the currently paused song.")
+    async def resume(self, ctx):
+        if ctx.voice_client.is_paused():
+            ctx.voice_client.resume()
+            embed = discord.Embed(title = "Success", color = 0x00ff00)
+            embed.add_field(name = "Resumed", value = f"The bot has been resumed.", inline = False)
+            embed.set_footer(text = "resume · Bot made by 3_n#7069")
+            await ctx.respond(embed = embed)
+        else:
+            embed = discord.Embed(title = "Error: Not paused", color = 0xff0000)
+            embed.add_field(name = "The bot is not paused.", value = "Please make sure the bot is paused before resuming.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
+            embed.set_footer(text = "resume · Bot made by 3_n#7069")
             await ctx.respond(embed = embed)
 
 def setup(bot):

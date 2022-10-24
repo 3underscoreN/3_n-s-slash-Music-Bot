@@ -7,6 +7,13 @@
     ],
     "music":[
         "join",
-        "leave"
+        "leave",
+        "play",
+        "pause",
+        "resume",
+        "stop",
+        "skip",
+        "queue",
+        "musicsysrun"
     ]
 }
