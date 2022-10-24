@@ -62,7 +62,7 @@ class embedPackaging():
             "info": 0x11f1f5
         }
 
-        Rembed = discord.Embed(title = kwargs["title"], description = kwargs.get("description"), color = colors[kwargs.get("embedType")] or kwargs.get("color") or 0x000000) 
+        Rembed = discord.Embed(title = kwargs["title"], description = kwargs.get("description"), color = colors.get(kwargs.get("embedType")) or kwargs.get("color") or 0x000000) 
         for field in (kwargs.get("fields") or {}):
             Rembed.add_field(**field)
         if (command := kwargs.get("command")) != None:
@@ -100,7 +100,8 @@ async def shutdown(ctx):
             ]
         )
         print("Shutting down...")
-        ctx.voice_client.disconnect()
+        await ctx.voice_client.disconnect()
+        await ctx.respond(embed = embed)
         await bot.close()
     else:
         embed = await embedPackaging.packEmbed(
