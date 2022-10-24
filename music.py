@@ -6,6 +6,7 @@ import re
 from youtube_search import YoutubeSearch
 import os
 import datetime
+from main import embedPackaging
 
 OWNER = int(os.getenv("OWNER"))
 
@@ -58,16 +59,32 @@ class music(commands.Cog):
         if ctx.author.id == OWNER:
             try:
                 exec(f'print({command})')
-                embed = discord.Embed(title = "Success", color = 0x00ff00)
-                embed.add_field(name = "Your instruction has been executed.",value = "Please check output in the console.", inline = False)
-                embed.set_footer(text = "sysrun · Bot made by 3_n#7069")
+                embed = await embedPackaging.packEmbed(
+                    title = "Success",
+                    embedType = "success",
+                    command = "musicsysrun",
+                    fields = [
+                        {"name": "Your instruction has been executed.", "value": "Please check output in the console.", "inline": False}
+                    ]
+                )
             except Exception as e:
-                embed = discord.Embed(title = "Error", color = 0xff0000)
-                embed.add_field(name = "Your instruction has NOT been executed.", value = f"There is an error in running your command.\nOriginal message: `{repr(e)}`", inline = False)
+                embed = await embedPackaging.packEmbed(
+                    title = "Error",
+                    embedType = "error",
+                    command = "musicsysrun",
+                    fields = [
+                        {"name": "Your instruction has NOT been executed.", "value": f"There is an error in running your command.\nOriginal message: `{repr(e)}`", "inline": False}
+                    ]
+                )
         else:
-            embed = discord.Embed(title = "Error: Not Owner", color = 0xff0000)
-            embed.add_field(name = "You cannot use the command.", value = "Only owner can use this command.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
-            embed.set_footer(text = "shutdown · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Not Owner",
+                embedType = "error",
+                command = "musicsysrun",
+                fields = [
+                    {"name": "You cannot use the command.", "value": "Only owner can use this command.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
             logging.warn("Bot sysrun command was used by non-owner.")
         await ctx.respond(embed = embed, ephemeral = True)
 
@@ -75,21 +92,36 @@ class music(commands.Cog):
     async def join(self, ctx):
         try:
             if ctx.author.voice is None:
-                embed = discord.Embed(title = "Error: Not in voice channel", color = 0xff0000)
-                embed.add_field(name = "You are not in a voice channel.", value = "Please join a voice channel and try again.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
-                embed.set_footer(text = "join · Bot made by 3_n#7069")
+                embed = await embedPackaging.packEmbed(
+                    title = "Error: Not in voice channel",
+                    embedType = "error",
+                    command = "join",
+                    fields = [
+                        {"name": "You are not in a voice channel.", "value": "Please join a voice channel and try again.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                    ]
+                )
                 await ctx.respond(embed = embed, ephemeral = True)
                 logging.warn(f"{ctx.author} tried to run /join but was not in any voice channel.")
             else:
                 await ctx.author.voice.channel.connect()
-                embed = discord.Embed(title = "Success", color = 0x00ff00)
-                embed.add_field(name = "Joined Voice Channel", value = f"Joined `{ctx.author.voice.channel.name}`. Feel free to play music with `/play` now~", inline = False)
-                embed.set_footer(text = "join · Bot made by 3_n#7069")
+                embed = await embedPackaging.packEmbed(
+                    title = "Success",
+                    embedType = "success",
+                    command = "join",
+                    fields = [
+                        {"name":"Joined Voice Channel", "value":f"Joined `{ctx.author.voice.channel.name}`. Feel free to play music with `/play` now~", "inline": False}
+                    ]
+                )
                 await ctx.respond(embed = embed)
         except discord.errors.ClientException:
-            embed = discord.Embed(title = "Error: Already in voice channel", color = 0xff0000)
-            embed.add_field(name = "It looks like I am in another voice channel.", value = f"Maybe you can try to move to that {ctx.voice_client.channel}.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
-            embed.set_footer(text = "join · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Already in voice channel",
+                embedType = "error",
+                command = "join",
+                fields = [
+                    {"name": "It looks like I am in another voice channel.", "value": f"Maybe you can try to move to that {ctx.voice_client.channel}.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /join but the bot is already in {ctx.voice_client.channel}.")
 
@@ -99,20 +131,35 @@ class music(commands.Cog):
             if ctx.voice_client.channel == ctx.author.voice.channel:
                 await ctx.voice_client.disconnect()
                 songQueue.reset()
-                embed = discord.Embed(title = "Success", color = 0x00ff00)
-                embed.add_field(name = "Left Voice Channel", value = f"Left `{ctx.author.voice.channel.name}` (by the way I also cleared the current queue.). You can always do `/join` to get me back in!", inline = False)
-                embed.set_footer(text = "leave · Bot made by 3_n#7069")
+                embed = embedPackaging.packEmbed(
+                    title = "Success",
+                    embedType = "success",
+                    command = "leave",
+                    fields = [
+                        {"name": "Left Voice Channel", "value": f"Left `{ctx.author.voice.channel.name}` (by the way, I also cleared the current queue.). You can always do `/join` to get me back in!", "inline": False}
+                    ]
+                )
                 await ctx.respond(embed = embed)
             else:
-                embed = discord.Embed(title = "Error: Not in same voice channel", color = 0xff0000)
-                embed.add_field(name = "Not in same voice channel", value = f"It looks like you are not in the same voice channel as me.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-                embed.set_footer(text = "leave · Bot made by 3_n#7069")
+                embed = await embedPackaging.packEmbed(
+                    title = "Error: Not in same voice channel",
+                    embedType = "error",
+                    command = "leave",
+                    fields = [
+                        {"name": "Not in same voice channel", "value": f"It looks like you are not in the same voice channel as me.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                    ]
+                )
                 await ctx.respond(embed = embed, ephemeral = True)
                 logging.warn(f"{ctx.author} tried to run /leave but is not in the same voice channel as the bot.")
-        except AttributeError:
-            embed = discord.Embed(title = "Error: Not in voice channel", color = 0xff0000)
-            embed.add_field(name = "It looks like I am not in any voice channels.", value = f"If I am not in any voice channel, I can't leave any voice channels!\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
-            embed.set_footer(text = "leave · Bot made by 3_n#7069")
+        except AttributeError: # if ctx.voice_client returns None
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Not in voice channel",
+                embedType = "error",
+                command = "leave",
+                fields = [
+                    {"name": "It looks like I am not in any voice channels.", "value": f"If I am not in any voice channel, I can't leave any voice channels!\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot)." , "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /leave but the bot is not in any voice channel.")
 
@@ -138,52 +185,77 @@ class music(commands.Cog):
         try:
             item = pafy.new(url)
         except ValueError:
-            embed = discord.Embed(title = "Error: Invalid Video", color = 0xff0000)
-            embed.add_field(name = "The video you provided is invalid.", value = "Please make sure you are providing a valid video URL or a valid keyword.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", inline = False)
-            embed.set_footer(text = "play · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Invalid Video",
+                embedType = "error",
+                command = "play",
+                fields = [
+                    {"name": "The video you provided is invalid.", "value": "Please make sure you are providing a valid video URL or a valid keyword.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
             await ctx.send_followup(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /play but provided an invalid video URL or keyword.")
             return
         
-        # play the song
-        if ctx.voice_client.is_playing():
+        # attempts to play the song or add it to the queue
+        if ctx.voice_client.is_playing(): # if the bot is playing a song, add the song to the queue
             queuePos = songQueue.add(item, ctx.author)
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Added to queue", value = f"Your song `{item.title}` has been added with a position of `{queuePos}`.", inline = False)
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "play",
+                fields = [
+                    {"name": "Added to queue", "value": f"Your song `{item.title}` has been added with a position of `{queuePos}`.", "inline": False}
+                ]
+            )
             embed.set_thumbnail(url = item.thumb)
-            embed.set_footer(text = "play · Bot made by 3_n#7069")
             await ctx.send_followup(embed = embed)
-        else:
+        else: # if the bot is not playing anything, play the song
             songQueue.current = [item, ctx.author]
             source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
             ctx.voice_client.play(source, after = lambda e: self.playnext(ctx))
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Now playing", value = f"Your song `{item.title}` should be played instantly.", inline = False)
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "play",
+                fields = [
+                    {"name": "Now playing", "value": f"Your song `{item.title}` should be played instantly.", "inline": False}
+                ]
+            )
             embed.set_thumbnail(url = item.thumb)
-            embed.set_footer(text = "play · Bot made by 3_n#7069")
             await ctx.send_followup(embed = embed)
 
     @commands.slash_command(name = "queue", description = "Shows the current queue.")
     async def queue(self, ctx):
         global songQueue
         if songQueue.current is None:
-            embed = discord.Embed(title = "Error: No songs in queue", color = 0xff0000)
-            embed.add_field(name = "There are no songs in the queue.", value = "Please play a song first before checking the queue.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-            embed.set_footer(text = "queue · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            embed = await embedPackaging.packEmbed(
+                title = "Error: No songs in queue",
+                embedType = "error",
+                command = "queue",
+                fields = [
+                    {"name": "There are no songs in the queue.", "value": "Please play a song first before checking the queue.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline":False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /queue but there are no songs in the queue.")
         else:
-            embed = discord.Embed(title = "Queue", color = 0x00f552)
-            embed.add_field(name = "Now playing", value = f"[{songQueue.current[0].title}](https://youtube.com/watch?v={songQueue.current[0].videoid})\nDuration: {songQueue.current[0].duration}\nRequested by {songQueue.current[1].mention}", inline = False)
-            embed.set_footer(text = "queue · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Queue",
+                embedType = "info",
+                command = "queue",
+                fields = [
+                    {"name": "Now playing", "value": f"[{songQueue.current[0].title}](https://youtube.com/watch?v={songQueue.current[0].videoid})\nDuration: {songQueue.current[0].duration}\nRequested by {songQueue.current[1].mention}", "inline":False}
+                ]
+            )
             if songQueue.length() > 0:
-                embed.add_field(
+                embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
                     name = "Up next", 
                     value = "\n\n".join([f"**{i + 1}**: [{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}" for i in range(songQueue.length())]), 
                     inline = False
                 )
                 total_queue_length = sum([songQueue.queue[i][0].length for i in range(songQueue.length())])
-                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ")
+                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ") # Overwrites the default footer
             await ctx.respond(embed = embed)
     
     @commands.slash_command(name = "skip", description = "Skips a specific song in the queue. If no index is provided, the bot will skip the current song.")
@@ -191,73 +263,138 @@ class music(commands.Cog):
     async def skip(self, ctx, index:int):
         global songQueue
         if songQueue.current is None:
-            embed = discord.Embed(title = "Error: No songs in queue", color = 0xff0000)
-            embed.add_field(name = "There are no songs in the queue.", value = "Please play a song first before skipping.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-            embed.set_footer(text = "skip · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            embed = await embedPackaging.packEmbed(
+                title = "Error: No songs in queue",
+                embedType = "error",
+                command = "skip",
+                fields = [
+                    {"name": "There are no songs in the queue.", "value": "Please play a song first before skipping.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /skip but there are no songs in the queue.")
         elif index is None:
             ctx.voice_client.stop()
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Skipped", value = f"The currently playing song has been skipped.", inline = False)
-            embed.set_footer(text = "skip · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "skip",
+                fields = [
+                    {"name": "Skipped", "value": f"The currently playing song has been skipped.", "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed)
         elif index > songQueue.length():
-            embed = discord.Embed(title = "Error: Invalid index", color = 0xff0000)
-            embed.add_field(name = "The index you provided is invalid.", value = "Please make sure you are providing a valid index.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-            embed.set_footer(text = "skip · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Invalid index",
+                embedType = "error",
+                command = "skip",
+                fields = [
+                    {"name": "The index you provided is invalid.", "value": "Please make sure you are providing a valid index.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot).","inline":False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /skip but provided an invalid index.")
         else:
             RemovedSong = songQueue.remove(index - 1)
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Skipped", value = f"The song at index `{index}`,  {RemovedSong[0].title} has been skipped.", inline = False)
-            embed.set_footer(text = "skip · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "skip",
+                fields = [
+                    {"name": "Skipped", "value": f"The song at index **{index}**: `{RemovedSong[0].title}` has been skipped.", "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed)
 
     @commands.slash_command(name = "stop", description = "Stops the bot and clears the queue.")
     async def stop(self, ctx):
         global songQueue
         if songQueue.current is None:
-            embed = discord.Embed(title = "Error: No songs in queue", color = 0xff0000)
-            embed.add_field(name = "There are no songs in the queue.", value = "Please play a song first before stopping.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-            embed.set_footer(text = "stop · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            embed = await embedPackaging.packEmbed(
+                title = "Error: No songs in queue",
+                embedType = "error",
+                command = "stop",
+                fields = [
+                    {"name": "There are no songs in the queue.", "value": "Please play a song first before stopping.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
+            logging.warn(f"{ctx.author} tried to run /stop but there are no songs in the queue.")
         else:
             songQueue.reset()
             ctx.voice_client.stop()
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Stopped", value = f"The bot has been stopped and the queue has been cleared.", inline = False)
-            embed.set_footer(text = "stop · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "stop",
+                fields = [
+                    {"name": "Stopped", "value": f"The bot has been stopped and the queue has been cleared.", "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed)
 
     @commands.slash_command(name = "pause", description = "Pauses the currently playing song.")
     async def pause(self, ctx):
         if ctx.voice_client.is_paused():
-            embed = discord.Embed(title = "Error: Already paused", color = 0xff0000)
-            embed.add_field(name = "The bot is already paused.", value = "Please make sure the bot is not paused before pausing.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-            embed.set_footer(text = "pause · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Already paused",
+                embedType = "error",
+                command = "pause",
+                fields = [
+                    {"name": "The bot is already paused.", "value": "Please make sure the bot is not paused before pausing.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
+            logging.warn(f"{ctx.author} tried to run /pause but the bot is already paused.")
         else:
             ctx.voice_client.pause()
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Paused", value = f"The bot has been paused.", inline = False)
-            embed.set_footer(text = "pause · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Success", 
+                embedType = "success", 
+                command = "pause", 
+                fields = [
+                    {"name": "Paused", "value": "The currently playing song has been paused.", "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed)
 
     @commands.slash_command(name = "resume", description = "Resumes the currently paused song.")
     async def resume(self, ctx):
         if ctx.voice_client.is_paused():
             ctx.voice_client.resume()
-            embed = discord.Embed(title = "Success", color = 0x00ff00)
-            embed.add_field(name = "Resumed", value = f"The bot has been resumed.", inline = False)
-            embed.set_footer(text = "resume · Bot made by 3_n#7069")
+            # embed = discord.Embed(title = "Success", color = 0x00ff00)
+            # embed.add_field(name = "Resumed", value = f"The bot has been resumed.", inline = False)
+            # embed.set_footer(text = "resume · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "resume",
+                fields = [
+                    {"name": "Resumed", "value": "The bot has been resumed.", "inline": False}
+                ]
+            )
             await ctx.respond(embed = embed)
         else:
-            embed = discord.Embed(title = "Error: Not paused", color = 0xff0000)
-            embed.add_field(name = "The bot is not paused.", value = "Please make sure the bot is paused before resuming.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
-            embed.set_footer(text = "resume · Bot made by 3_n#7069")
-            await ctx.respond(embed = embed)
+            # embed = discord.Embed(title = "Error: Not paused", color = 0xff0000)
+            # embed.add_field(name = "The bot is not paused.", value = "Please make sure the bot is paused before resuming.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot)." , inline = False)
+            # embed.set_footer(text = "resume · Bot made by 3_n#7069")
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Not paused",
+                embedType = "error",
+                command = "resume",
+                fields = [
+                    {"name": "The bot is not paused.", "value": "Please make sure the bot is paused before resuming.\nIf you believe this is an error, please open an issue on [GitHub](https://githubcom/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
+            logging.warn(f"{ctx.author} tried to run /resume but the bot is not paused.")
+
+    @commands.slash_command(name = "repeat", description = "Check the current repeat mode, or set it to a new specific mode.")
+    @discord.option("mode", str, required = False, description = "The mode to set the repeat to.", choices = ["off", "single", "queue"])
+    async def repeat(self, ctx, mode:str):
+        pass
+
 
 def setup(bot):
     bot.add_cog(music(bot))
