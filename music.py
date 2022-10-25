@@ -19,17 +19,103 @@ FFMPEG_OPTIONS = {
 }
 
 class queue():
+    """
+    Class of a queue, which contains a list of pafy objects and the requester. Also contains the currently playing song and its requester.
+
+    Attributes
+    ----------
+    queue : list
+        A list of queue with each element being in a list of [`pafyObject`, `requester`]. 
+        pafyObject is created with `pafy.new()` while requester is a discord.Member object.
+    
+    current : list
+        Indicates  thre currently playing song.
+        A list of [`pafyObject`, `requester`]. 
+        pafyObject is created with `pafy.new()` while requester is a discord.Member object.
+
+    forceSkip : bool
+        Indicates whether the next song should be force skipped.
+        Ignores repeat mode for the next queue.next() call.
+        If the queue is exhausted, setting this to True will also reset the repeat mode to off upon the next queue.next() call.
+
+    private _repeatMode : int
+        Indicates the repeat mode of the queue.
+        Should be accessed through `repeatMode` property.
+
+
+    Methods
+    -------
+    add(pafyObject, requester) -> int
+        Adds a song to the queue. 
+        Returns the length of the queue (which can be used to indicated the position of the song in the queue).
+
+    next() -> list
+        Updates the `queue` attributes to remove the first song in the list and set it as the `current` attribute. 
+        Returns the `current` attribute after the update.
+
+    remove(index) -> list
+        Removes a song from the queue. Returns the removed song.
+
+    reset()
+        Resets the queue and the current song.
+        This function is destructive. All songs in the queue will be lost.
+
+    length() -> int
+        Returns the length of the queue.
+
+    Properties
+    ----------
+    @repeatMode.getter
+    def repeatMode() -> int
+        Returns the repeat mode of the queue in string. 
+        Possible values are "off", "single", and "all".
+
+    @repeatMode.setter
+    def repeatMode(mode) -> None
+        Sets the repeat mode of the queue.
+        The function accepts a string (of how the class returns repeatMode) or an integer.
+
+    Raises
+    ------
+    IndexError
+        Raised when the queue is empty and the next() function is called.
+    """
     def __init__(self):
         self.queue = []
         self.current = None
+        self._repeatMode = 0 # 0 = off, 1 = repeat current, 2 = repeat queue
+        self.forceSkip = False
 
     def add(self, pafyObject, requester):
         self.queue.append([pafyObject, requester])
         return len(self.queue)
 
     def next(self):
-        self.current = self.queue.pop(0)
-        return self.current
+        if not self.forceSkip:
+            if self._repeatMode == 0:
+                if len(self.queue) > 0:
+                    self.current = self.queue.pop(0)
+                    return self.current
+                else:
+                    raise IndexError("There are no more songs in the queue.")
+            if self._repeatMode == 1:
+                return self.current
+            if self._repeatMode == 2:
+                if len(self.queue) > 0:
+                    self.current = self.queue.pop(0)
+                    self.queue.append(self.current)
+                    return self.current
+                else:
+                    return self.current
+        else:
+            if len(self.queue) > 0:
+                self.current = self.queue.pop(0)
+                self.forceSkip = False
+                return self.current
+            else:
+                self.forceSkip = False
+                self._repeatMode = 0
+                return None
 
     def remove(self, index):
         return self.queue.pop(index)
@@ -37,20 +123,65 @@ class queue():
     def reset(self):
         self.queue = []
         self.current = None
+        self._repeatMode == 0
 
     def length(self):
         return len(self.queue)
 
+    @property
+    def repeatMode(self):
+        return self._repeatMode
+
+    @repeatMode.getter
+    def repeatMode(self):
+        if self._repeatMode == 0:
+            return "off"
+        if self._repeatMode == 1:
+            return "current"
+        if self._repeatMode == 2:
+            return "queue"
+
+    @repeatMode.setter
+    def repeatMode(self, value):
+        if value in ["off", 0, "0", "none", "no"]:
+            self._repeatMode = 0
+            return
+        if value in ["current", 1, "1", "this", "single"]:
+            self._repeatMode = 1
+            return
+        if value in ["queue", 2, "2", "all", "list"]:
+            self._repeatMode = 2
+            return
+
 songQueue = queue()
 
 def playnext(ctx):
-    if songQueue.length() == 0:
-        songQueue.reset()
-        return
-    song = songQueue.next()
-    ctx.voice_client.play(discord.FFmpegOpusAudio(song[0].getbestaudio().url, **FFMPEG_OPTIONS), after=lambda e: playnext(ctx))
+    try:
+        song = songQueue.next()
+        if song != None:
+            ctx.voice_client.play(discord.FFmpegOpusAudio(song[0].getbestaudio().url, **FFMPEG_OPTIONS), after=lambda e: playnext(ctx))
+        else:
+            pass # unable to fetch anything from queue.next()
+    except IndexError:
+        pass # no more songs to play
 
 class playButton(PaginatorButton):
+    """
+    Subclass of PaginatorButton that plays a song when clicked. This can ONLY be a "page_indicator" button.
+
+    Attributes
+    ----------
+    ctx: discord.ApplicationContext
+        The context of the command that created the paginator button.
+    result: dict
+        The result of the youtube search. Should be created with the YoutubeSearch().to_dict() method.
+
+    Methods
+    -------
+    async def callback(self, interaction: discord.Interaction)
+        This method is a coroutine.
+        It will be called when the button is clicked and an ``discord.Interaction`` object is created.
+    """
     def __init__(self, ctx, result):
         super().__init__("page_indicator", style = discord.ButtonStyle.green)
         self.ctx = ctx
@@ -90,6 +221,93 @@ class playButton(PaginatorButton):
         await interaction.response.defer()
         await self.ctx.edit(embed = embed)
 
+class skipConfirmView(discord.ui.View):
+    def __init__(self, ctx:discord.ApplicationContext, **kwargs):
+        self.ctx = ctx
+        super().__init__(**kwargs)
+
+    @discord.ui.button(label = "Confirm and turn off repeat", style = discord.ButtonStyle.green)
+    async def confirm_off_button_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        global songQueue
+        songQueue.repeatMode = "off"
+        self.ctx.voice_client.stop()
+        self.clear_items()
+        embed_ephemeral = await embedPackaging.packEmbed(
+            title = "Success",
+            embedType = "success",
+            command = "skip",
+            fields = [
+                {"name": "Skipped", "value": "Operation completed.", "inline": False}
+            ]
+        )
+        await self.message.edit(embed = embed_ephemeral, view = self)
+        self.stop()
+        embed_Public = await embedPackaging.packEmbed(
+            title = "Success",
+            embedType = "success",
+            command = "skip",
+            fields = [
+                {"name": "Skipped", "value": "The current song has been skipped.", "inline": False},
+                {"name": "Repeat Mode", "value": "Repeat mode has been turned off.", "inline": False},
+                {"name": "Requester", "value": f"{self.ctx.author.mention}", "inline": False}
+            ]
+        )
+        await interaction.response.send_message(embed = embed_Public)
+    
+    @discord.ui.button(label = "Confirm and keep repeat", style = discord.ButtonStyle.red)
+    async def comfirm_keep_button_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        global songQueue
+        songQueue.forceSkip = True
+        self.ctx.voice_client.stop()
+        self.clear_items()
+        embed_ephemeral = await embedPackaging.packEmbed(
+            title = "Success",
+            embedType = "success",
+            command = "skip",
+            fields = [
+                {"name": "Skipped", "value": "Operation completed.", "inline": False}
+            ]
+        )
+        await self.message.edit(embed = embed_ephemeral, view = self)
+        self.stop()
+        embed_Public = await embedPackaging.packEmbed(
+            title = "Success",
+            embedType = "success",
+            command = "skip",
+            fields = [
+                {"name": "Skipped", "value": "The current song has been skipped.", "inline": False},
+                {"name": "Repeat Mode", "value": "Repeat mode has NOT changed.", "inline": False},
+                {"name": "Requester", "value": f"{self.ctx.author.mention}", "inline": False}
+            ]
+        )
+        await interaction.response.send_message(embed = embed_Public)
+    
+    @discord.ui.button(label = "Cancel", style = discord.ButtonStyle.grey)
+    async def cancel_button_callback(self, button: discord.ui.Button, interaction: discord.Interaction):
+        self.clear_items()
+        await interaction.response.defer()
+        embed = await embedPackaging.packEmbed(
+            title = "Cancelled",
+            color = 0xffff00,
+            command = "skip",
+            fields = [
+                {"name": "Cancelled", "value": "Operation cancelled. Nothing has been changed.", "inline": False},
+            ]
+        )
+        await self.message.edit(embed = embed, view = self)
+        self.stop()
+
+    async def on_timeout(self):
+        self.clear_items()
+        embed = await embedPackaging.packEmbed(
+            title = "Operation cancelled",
+            color = 0xffff00,
+            command = "skip",
+            fields = [
+                {"name": "Timed out", "value": "You took too long to respond. The skip has been cancelled.", "inline": False}
+            ]
+        )
+        await self.message.edit(embed = embed, view = self)
 
 class music(commands.Cog):
     def __init__(self, bot):
@@ -296,12 +514,12 @@ class music(commands.Cog):
                     inline = False
                 )
                 total_queue_length = sum([songQueue.queue[i][0].length for i in range(songQueue.length())])
-                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ") # Overwrites the default footer
+                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · current repeat mode: {songQueue.repeatMode} · Bot made by 3_n#7069 ") # Overwrites the default footer
             await ctx.respond(embed = embed)
     
     @commands.slash_command(name = "skip", description = "Skips a specific song in the queue. If no index is provided, the bot will skip the current song.")
     @discord.option("index", int, description = "The index of the song you want to skip.", required = False, min_value = 1)
-    async def skip(self, ctx, index:int):
+    async def skip(self, ctx, index:int): #FIXME: Skip not behaving well when repeat mode is single
         global songQueue
         if songQueue.current is None:
             embed = await embedPackaging.packEmbed(
@@ -315,16 +533,29 @@ class music(commands.Cog):
             await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /skip but there are no songs in the queue.")
         elif index is None:
-            ctx.voice_client.stop()
-            embed = await embedPackaging.packEmbed(
-                title = "Success",
-                embedType = "success",
-                command = "skip",
-                fields = [
-                    {"name": "Skipped", "value": f"The currently playing song has been skipped.", "inline": False}
-                ]
-            )
-            await ctx.respond(embed = embed)
+            if songQueue.repeatMode != "current":
+                ctx.voice_client.stop()
+                embed = await embedPackaging.packEmbed(
+                    title = "Success",
+                    embedType = "success",
+                    command = "skip",
+                    fields = [
+                        {"name": "Skipped", "value": f"The currently playing song has been skipped.", "inline": False}
+                    ]
+                )
+                await ctx.respond(embed = embed)
+            else:
+                confirmMessage = skipConfirmView(ctx, timeout = 60)
+                embed = await embedPackaging.packEmbed(
+                    title = "Are you sure?",
+                    color = 0xffff00,
+                    command = "skip",
+                    fields = [
+                        {"name": "Are you sure you want to skip the current song?", "value": "You are on `single` repeat mode right now.\nConfirm your choices and choose an approiate behavior for repeating songs.", "inline": False},
+                        {"name": "Note", "value": "These bottons wll not work after 60 seconds.", "inline": False}
+                    ]
+                )
+                await ctx.respond(embed = embed, view = confirmMessage, ephemeral = True)
         elif index > songQueue.length():
             embed = await embedPackaging.packEmbed(
                 title = "Error: Invalid index",
@@ -460,8 +691,30 @@ class music(commands.Cog):
         paginator.add_button(PaginatorButton("last", label="⏩", style=discord.ButtonStyle.grey))
         await paginator.respond(ctx.interaction, ephemeral = True)
 
-
-        
+    @commands.slash_command(name = "repeat", description = "Checks the current repeat mode, or set repeat mode to the passed argument.")
+    @discord.option("mode", description = "The mode to set repeat to.", required = False, choices = ["off", "current", "queue"])
+    async def repeat(self, ctx, mode:str):
+        if mode == None:
+            embed = await embedPackaging.packEmbed(
+                title = "Repeat mode",
+                embedType = "info",
+                command = "repeat",
+                fields = [
+                    {"name": "Current repeat mode", "value": f"The current repeat mode is `{songQueue.repeatMode}`.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed)
+        else:
+            songQueue.repeatMode = mode
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "repeat",
+                fields = [
+                    {"name": "Repeat mode set", "value": f"The repeat mode has been set to `{songQueue.repeatMode}`.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed)
 
 def setup(bot):
     bot.add_cog(music(bot))
