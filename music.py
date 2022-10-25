@@ -519,7 +519,7 @@ class music(commands.Cog):
     
     @commands.slash_command(name = "skip", description = "Skips a specific song in the queue. If no index is provided, the bot will skip the current song.")
     @discord.option("index", int, description = "The index of the song you want to skip.", required = False, min_value = 1)
-    async def skip(self, ctx, index:int): #FIXME: Skip not behaving well when repeat mode is single
+    async def skip(self, ctx, index:int): 
         global songQueue
         if songQueue.current is None:
             embed = await embedPackaging.packEmbed(
