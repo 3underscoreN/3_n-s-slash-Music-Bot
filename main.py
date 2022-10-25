@@ -20,6 +20,16 @@ for category in COMMANDS:
         COMMANDS_UNPACKED.append(command)
 
 class embedPackaging():
+    """
+    This class is used to package different kinds of embeds for the bot.
+
+    Methods
+    -------
+    @staticmethod 
+    async def packEmbed(**kwargs): -> discord.Embed
+        This method is used to package a general-purpose embed for the bot.
+        If you would like more details about the keyword arguments, please refer to the documentation of the method.
+    """
 
     @staticmethod
     async def packEmbed(**kwargs):
