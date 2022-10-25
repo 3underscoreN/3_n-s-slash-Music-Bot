@@ -49,9 +49,12 @@ class queue():
         Adds a song to the queue. 
         Returns the length of the queue (which can be used to indicated the position of the song in the queue).
 
-    next() -> list
-        Updates the `queue` attributes to remove the first song in the list and set it as the `current` attribute. 
+    next() -> Union[list, None]
+        Updates the `queue` attributes to remove the first song in the list and set it as the `current` attribute according to the repeat mode.
+        If forceSkip is True, the next song will be force skipped.
         Returns the `current` attribute after the update.
+        If forceSkip is True and the queue is exhausted, the repeat mode will be reset to off and it will return None.
+        Otherwise, an IndexError will be raised.
 
     remove(index) -> list
         Removes a song from the queue. Returns the removed song.
@@ -78,7 +81,7 @@ class queue():
     Raises
     ------
     IndexError
-        Raised when the queue is empty and the next() function is called.
+        Raised when the queue is empty and the next() function is called. (Only when forceSkip is False)
     """
     def __init__(self):
         self.queue = []
@@ -172,7 +175,7 @@ class playButton(PaginatorButton):
     Attributes
     ----------
     ctx: discord.ApplicationContext
-        The context of the command that created the paginator button.
+        The context of the command that calls the paginator button.
     result: dict
         The result of the youtube search. Should be created with the YoutubeSearch().to_dict() method.
 
@@ -222,6 +225,23 @@ class playButton(PaginatorButton):
         await self.ctx.edit(embed = embed)
 
 class skipConfirmView(discord.ui.View):
+    """
+    Subclass of discord.ui.View that contains buttons to confirm or cancel a skip when repeat mode is single.
+
+    Attributes
+    ----------
+    ctx: discord.ApplicationContext
+        The context of the command that calls the object.
+    **kwargs
+        Any other keyword arguments. It will be passed to the discord.ui.View superclass.
+
+    Methods
+    -------
+    async def on_timeout(self):
+        This method is a coroutine.
+        It will be automatically called when the view times out. (Part of the discord.ui.View superclass, but overwritten here)
+        It edits the message to show that the view timed out, as well as stopping interaction listening, and clear all buttons.
+    """
     def __init__(self, ctx:discord.ApplicationContext, **kwargs):
         self.ctx = ctx
         super().__init__(**kwargs)
