@@ -1,0 +1,63 @@
+{
+    "ping":{ 
+        "usage":"/ping",
+        "description":"Returns the latency of the bot."
+    },
+    "help":{
+        "usage":"/help",
+        "description":"Returns the help message."
+    },
+    "sysrun":{
+        "usage":"/sysrun <exec>",
+        "description":"Runs a command on the system.\n*This command is reserved for debugging purpose and only the bot owner can use it.*"
+    },
+    "shutdown":{
+        "usage":"/shutdown",
+        "description":"Shuts down the bot.\n*This command is reserved the bot owner only.*"
+    },
+
+    "join":{
+        "usage":"/join",
+        "description":"Joins the voice channel you are in."
+    },
+    "leave":{
+        "usage":"/leave",
+        "description":"Leaves the voice channel."
+    },
+    "play":{
+        "usage":"/play <URL/keyword>",
+        "description":"Plays a song from a url. If no URL is provided, it will search YouTube and play the first result."
+    },
+    "pause":{
+        "usage":"/pause",
+        "description":"Pauses the bot if it is playing a song."
+    },
+    "resume":{
+        "usage":"/resume",
+        "description":"Resumes the bot if it is paused."
+    },
+    "stop":{
+        "usage":"/stop",
+        "description":"Stops the bot if it is playing a song. It will also empty the queue."
+    },
+    "skip":{
+        "usage":"/skip [index]",
+        "description":"Skips the current song. If an index is provided, it will remove the song at that index from the queue."
+    },
+    "queue":{
+        "usage":"/queue",
+        "description":"Returns the current queue."
+    },
+    "musicsysrun":{
+        "usage":"/musicsysrun <exec>",
+        "description":"Runs a command on the system.\n*This command is reserved for debugging purpose and only the bot owner can use it.*"
+    },
+    "repeat":{
+        "usage":"/repeat [mode]",
+        "description":"Toggles repeat mode. If a mode is not provided, it will return the current mode.\nAvailable modes:\n- `off` - Disables repeat mode.\n- `current` - Repeats the current song.\n- `queue` - Repeats the entire queue."
+    },
+    "search":{
+        "usage":"/search <keyword> [index]",
+        "description":"Searches YouTube for a video and returns results specified by the index. If no index is provided, it will return the first 5 results."
+    }
+}

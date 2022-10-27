@@ -71,7 +71,7 @@ class queue():
     @repeatMode.getter
     def repeatMode() -> int
         Returns the repeat mode of the queue in string. 
-        Possible values are "off", "single", and "all".
+        Possible values are "off", "current", and "all".
 
     @repeatMode.setter
     def repeatMode(mode) -> None
@@ -226,7 +226,7 @@ class playButton(PaginatorButton):
 
 class skipConfirmView(discord.ui.View):
     """
-    Subclass of discord.ui.View that contains buttons to confirm or cancel a skip when repeat mode is single.
+    Subclass of discord.ui.View that contains buttons to confirm or cancel a skip when repeat mode is current.
 
     Attributes
     ----------
@@ -571,7 +571,7 @@ class music(commands.Cog):
                     color = 0xffff00,
                     command = "skip",
                     fields = [
-                        {"name": "Are you sure you want to skip the current song?", "value": "You are on `single` repeat mode right now.\nConfirm your choices and choose an approiate behavior for repeating songs.", "inline": False},
+                        {"name": "Are you sure you want to skip the current song?", "value": "You are on `current` repeat mode right now.\nConfirm your choices and choose an approiate behavior for repeating songs.", "inline": False},
                         {"name": "Note", "value": "These bottons wll not work after 60 seconds.", "inline": False}
                     ]
                 )
