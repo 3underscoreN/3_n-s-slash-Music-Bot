@@ -446,11 +446,26 @@ class music(commands.Cog):
     @discord.option("url_or_keyword", str, description = "The song you want to play, either in URL or in keyword", required = True)
     async def play(self, ctx, url_or_keyword:str):
         global songQueue
-        await ctx.defer()
+        
 
         # join the voice channel if the bot is not in any voice channel
         if ctx.voice_client is None:
-            await ctx.author.voice.channel.connect()
+            if ctx.author.voice is None:
+                embed = await embedPackaging.packEmbed(
+                    title = "Error: Not in voice channel",
+                    embedType = "error",
+                    command = "play",
+                    fields = [
+                        {"name": "You are not in a voice channel.", "value": "Please join a voice channel and try again.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                    ]
+                )
+                await ctx.respond(embed = embed, ephemeral = True)
+                logging.warn(f"{ctx.author} tried to run /play but was not in any voice channel.")
+                return
+            else:
+                await ctx.author.voice.channel.connect()
+
+        await ctx.defer()
 
         # check if the input is a URL or a keyword
         url = YOUTUBE_REGEX.match(url_or_keyword)
