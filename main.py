@@ -214,8 +214,8 @@ async def about(ctx):
     )
     await ctx.respond(embed = embed)
 
-@bot.slash_command(name = "sysrun", description = "For debugging purpose only. runs a specific python statement.")
-@discord.option("command", str, description = "Wrapped in print() for output. Supports variable-only statements and expression only.")
+@bot.slash_command(name = "sysrun", description = "For debugging purpose only. runs a specific python exression.")
+@discord.option("command", str, required = True, description = "Wrapped in print() for output. Supports variable-only statements and expression only.")
 async def sysrun(ctx, command:str):
     if ctx.author.id == OWNER:
         try:
@@ -249,8 +249,8 @@ async def sysrun(ctx, command:str):
         logging.warn("Bot sysrun command was used by non-owner.")
     await ctx.respond(embed = embed, ephemeral = True)
 
-@bot.slash_command(name = "help", description = "Shows a list of commands when nothing is passed, and shows a specific information if one is passed.")
-@discord.option("command", description = "A speicific command", required = False, choices = COMMANDS_UNPACKED)
+@bot.slash_command(name = "help", description = "Shows a list of commands, or details about a command if one is passed.")
+@discord.option("command", description = "A command that you wish to know more about", required = False, choices = COMMANDS_UNPACKED)
 async def help(ctx, command:str):
     global helpEmbeds
     if command is None:
@@ -270,6 +270,7 @@ async def help(ctx, command:str):
             
 
 bot.load_extension("music")
+bot.load_extension("games")
 
 if __name__ == "__main__":
     bot.run(os.getenv('TOKEN'))
