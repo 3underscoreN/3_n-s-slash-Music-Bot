@@ -8,11 +8,14 @@ from youtube_search import YoutubeSearch
 import os
 import datetime
 from main import embedPackaging
+import random
 
 OWNER = int(os.getenv("OWNER"))
 
 # regex that matches youtube url with video id
 YOUTUBE_REGEX = re.compile(r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.{11})")
+# regex that match a youtube playlist url 
+YOUTUBE_PLAYLIST_REGEX = re.compile(r"(?:https:\/\/)?(?:www\.)?(?:youtube\.com)\/(?:watch\?v=.{11}&|playlist\?)?list=(?:[A-Za-z0-9_-])+")
 FFMPEG_OPTIONS = {
     'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
     'options': '-vn'
@@ -88,6 +91,7 @@ class queue():
         self.current = None
         self._repeatMode = 0 # 0 = off, 1 = repeat current, 2 = repeat queue
         self.forceSkip = False
+        self.shuffle = False
 
     def add(self, pafyObject, requester):
         self.queue.append([pafyObject, requester])
@@ -97,24 +101,39 @@ class queue():
         if not self.forceSkip:
             if self._repeatMode == 0:
                 if len(self.queue) > 0:
-                    self.current = self.queue.pop(0)
-                    return self.current
+                    if not shuffle:
+                        self.current = self.queue.pop(0)
+                        return self.current
+                    else:
+                        self.current = self.queue.pop(random.randint(0, len(self.queue) - 1))
+                        return self.current
                 else:
                     raise IndexError("There are no more songs in the queue.")
             if self._repeatMode == 1:
                 return self.current
             if self._repeatMode == 2:
                 if len(self.queue) > 0:
-                    self.current = self.queue.pop(0)
-                    self.queue.append(self.current)
-                    return self.current
+                    if not shuffle:
+                        self.current = self.queue.pop(0)
+                        self.queue.append(self.current)
+                        return self.current
+                    else:
+                        position = random.randint(0, len(self.queue) - 1)
+                        self.current = self.queue.pop(position)
+                        self.queue.insert(position, self.current)
+                        return self.current
                 else:
                     return self.current
         else:
             if len(self.queue) > 0:
-                self.current = self.queue.pop(0)
-                self.forceSkip = False
-                return self.current
+                if not shuffle:
+                    self.current = self.queue.pop(0)
+                    self.forceSkip = False
+                    return self.current
+                else:
+                    self.current = self.queue.pop(random.randint(0, len(self.queue)-1))
+                    self.forceSkip = False
+                    return self.current
             else:
                 self.forceSkip = False
                 self._repeatMode = 0
@@ -750,6 +769,36 @@ class music(commands.Cog):
                 ]
             )
             await ctx.respond(embed = embed)
+
+    @commands.slash.command(name = "shuffle", description = "Checks the current shuffle mode, or toggle it if one is passed.")
+    @discord.option("mode", description = "Whether shuffle mode should be on or off.", required = False, choices = ["on", "off"])
+    async def shuffle(self, ctx, mode:str):
+        global songQueue
+        if mode == None:
+            embed = await embedPackaging.packEmbed(
+                title = "Shuffle mode",
+                embedType = "info",
+                command = "shuffle",
+                fields = [
+                    {"name":"Current shuffle mode", "value":f"The current shuffle mode is `{'on' if songQueue.shuffle else 'off'}`","inline": False}
+                ]
+            )
+        else:
+            songQueue.shuffle = (True if "mode" == "on" else False)
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "shuffle",
+                fields = [
+                    {"name":"Shufle mode set", "value":f"The current shuffle mode has been set to `{'on' if songQueue.shuffle else 'off'}`","inline": False}
+                ]
+            )
+        await ctx.respond(embed = embedd)
+
+    # @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue.")
+    # @discord.option("url", description = "The playlist URL.", required = True)
+    # async def addplaylist(self, url:str):
+    #     pass
 
 def setup(bot):
     bot.add_cog(music(bot))
