@@ -101,7 +101,7 @@ class queue():
         if not self.forceSkip:
             if self._repeatMode == 0:
                 if len(self.queue) > 0:
-                    if not shuffle:
+                    if not self.shuffle:
                         self.current = self.queue.pop(0)
                         return self.current
                     else:
@@ -113,7 +113,7 @@ class queue():
                 return self.current
             if self._repeatMode == 2:
                 if len(self.queue) > 0:
-                    if not shuffle:
+                    if not self.shuffle:
                         self.current = self.queue.pop(0)
                         self.queue.append(self.current)
                         return self.current
@@ -126,7 +126,7 @@ class queue():
                     return self.current
         else:
             if len(self.queue) > 0:
-                if not shuffle:
+                if not self.shuffle:
                     self.current = self.queue.pop(0)
                     self.forceSkip = False
                     return self.current
@@ -555,6 +555,7 @@ class music(commands.Cog):
         else:
             embed = await embedPackaging.packEmbed(
                 title = "Queue",
+                description = f"Repeat mode: `{songQueue.repeatMode}`\nShuffle mode: `{'on' if songQueue.shuffle else 'off'}`",
                 embedType = "info",
                 command = "queue",
                 fields = [
@@ -568,7 +569,7 @@ class music(commands.Cog):
                     inline = False
                 )
                 total_queue_length = sum([songQueue.queue[i][0].length for i in range(songQueue.length())])
-                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · current repeat mode: {songQueue.repeatMode} · Bot made by 3_n#7069 ") # Overwrites the default footer
+                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ") # Overwrites the default footer
             await ctx.respond(embed = embed)
     
     @commands.slash_command(name = "skip", description = "Skips a specific song in the queue. If no index is provided, the bot will skip the current song.")
@@ -770,7 +771,7 @@ class music(commands.Cog):
             )
             await ctx.respond(embed = embed)
 
-    @commands.slash.command(name = "shuffle", description = "Checks the current shuffle mode, or toggle it if one is passed.")
+    @commands.slash_command(name = "shuffle", description = "Checks the current shuffle mode, or toggle it if one is passed.")
     @discord.option("mode", description = "Whether shuffle mode should be on or off.", required = False, choices = ["on", "off"])
     async def shuffle(self, ctx, mode:str):
         global songQueue
@@ -784,7 +785,7 @@ class music(commands.Cog):
                 ]
             )
         else:
-            songQueue.shuffle = (True if "mode" == "on" else False)
+            songQueue.shuffle = (True if mode == "on" else False)
             embed = await embedPackaging.packEmbed(
                 title = "Success",
                 embedType = "success",
@@ -793,7 +794,7 @@ class music(commands.Cog):
                     {"name":"Shufle mode set", "value":f"The current shuffle mode has been set to `{'on' if songQueue.shuffle else 'off'}`","inline": False}
                 ]
             )
-        await ctx.respond(embed = embedd)
+        await ctx.respond(embed = embed)
 
     # @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue.")
     # @discord.option("url", description = "The playlist URL.", required = True)
