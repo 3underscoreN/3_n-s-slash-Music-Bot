@@ -267,10 +267,7 @@ async def help(ctx, command:str):
         )
         await ctx.respond(embed = embed, ephemeral = True)
 
-            
-
 bot.load_extension("music")
-bot.load_extension("games")
 
 if __name__ == "__main__":
     bot.run(os.getenv('TOKEN'))
