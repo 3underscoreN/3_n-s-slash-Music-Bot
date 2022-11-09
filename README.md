@@ -11,7 +11,8 @@ You would need these python packages before you can run this bot:
 * [PyNaCl](https://github.com/pyca/pynacl/)
 * [youtube-dl](https://github.com/ytdl-org/youtube-dl) (Not recommended since it is pretty out of date, check below for alternatives)
 * [youtube_search](https://github.com/joetats/youtube_search)
-* pytube
+* [pytube](https://github.com/pytube/pytube)
+
 You would also need ffmpeg installed. 
 
 To install these packages, you can use `pip`:
@@ -44,6 +45,25 @@ $ pip install yt-dlp
 
 If you do not have the ability to deploy the project, an invitation link is available [here](https://discord.com/api/oauth2/authorize?client_id=984461189704732722&permissions=3147776&scope=bot). However, do keep in mind that support for multiple servers is NOT tested and provided "as is".
 
+## Deploy
+Follow the steps to deploy the bot on your server/computer:
+1. Clone the repository:
+```bash
+$ git clone https://github.com/3underscoreN/3_n-s-slash-Music-Bot.git
+```
+2. Create your own discord bot and fetch your discord token [here](https://discord.com/developers/applications). You also need to obtain your own user ID.
+
+3. Set up these environment variables:
+```bash
+$ export TOKEN='<your token here>'
+$ export OWNER='<your user ID here>'
+```
+
+4. Run the bot:
+```bash
+$ python3 main.py
+```
+
 ## Error Handling
 There might be some errors if you are using `youtube-dl` or `yt-dlp` as the backend: 
 ```
@@ -59,3 +79,12 @@ You might also get Opus/FFmpeg related errors:
 discord.errors.ClientException: ffmpeg was not found.
 ```
 Please ensure ffmpeg is **installed** and **added to your PATH**. Installation of ffmpeg differs from platform to platform, and you can find the installation guide [here](https://ffmpeg.org/download.html).
+
+## Issues
+If you encountered any undesirable behaviour, please open an issue on this repository.
+
+## Contribution
+If you would like to contribute to this project, please open a pull request. I will review it as soon as possible.
+
+## License
+This project is licensed under BSD 2-Clause. See the [LICENSE](LICENSE) file for details.
