@@ -556,7 +556,7 @@ class music(commands.Cog):
                     ]
                 )
                 for j in range((5 * i + 1), (5 * i + 6)):
-                    if j > songQueue.length():
+                    if j >= songQueue.length():
                         break
                     embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
                         name = f"**{j}**", 
