@@ -9,6 +9,7 @@ import os
 import datetime
 from main import embedPackaging
 import random
+from pytube import Playlist
 
 OWNER = int(os.getenv("OWNER"))
 
@@ -553,24 +554,30 @@ class music(commands.Cog):
             await ctx.respond(embed = embed, ephemeral = True)
             logging.warn(f"{ctx.author} tried to run /queue but there are no songs in the queue.")
         else:
-            embed = await embedPackaging.packEmbed(
-                title = "Queue",
-                description = f"Repeat mode: `{songQueue.repeatMode}`\nShuffle mode: `{'on' if songQueue.shuffle else 'off'}`",
-                embedType = "info",
-                command = "queue",
-                fields = [
-                    {"name": "Now playing", "value": f"[{songQueue.current[0].title}](https://youtube.com/watch?v={songQueue.current[0].videoid})\nDuration: {songQueue.current[0].duration}\nRequested by {songQueue.current[1].mention}", "inline":False}
-                ]
-            )
-            if songQueue.length() > 0:
-                embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
-                    name = "Up next", 
-                    value = "\n\n".join([f"**{i + 1}**: [{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}" for i in range(songQueue.length())]), 
-                    inline = False
+            embeds = []
+            total_queue_length = sum([songQueue.queue[i][0].length for i in range(songQueue.length())])
+            for i in range(0, songQueue.length() // 5 + 1):
+                embed = await embedPackaging.packEmbed(
+                    title = "Queue",
+                    description = f"Repeat mode: `{songQueue.repeatMode}`\nShuffle mode: `{'on' if songQueue.shuffle else 'off'}`",
+                    embedType = "info",
+                    command = "queue",
+                    fields = [
+                        {"name": "Now playing", "value": f"[{songQueue.current[0].title}](https://youtube.com/watch?v={songQueue.current[0].videoid})\nDuration: {songQueue.current[0].duration}\nRequested by {songQueue.current[1].mention}", "inline":False}
+                    ]
                 )
-                total_queue_length = sum([songQueue.queue[i][0].length for i in range(songQueue.length())])
-                embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ") # Overwrites the default footer
-            await ctx.respond(embed = embed)
+                for j in range((5 * i + 1), (5 * i + 6)):
+                    if j > songQueue.length():
+                        break
+                    embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
+                        name = f"**{j + 1}**", 
+                        value = f"[{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}", 
+                        inline = False
+                    )
+                    embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ") # Overwrites the default footer
+                embeds.append(embed)
+            paginator = Paginator(embeds, timeout = 60)
+            await paginator.respond(ctx.interaction)
     
     @commands.slash_command(name = "skip", description = "Skips a specific song in the queue. If no index is provided, the bot will skip the current song.")
     @discord.option("index", int, description = "The index of the song you want to skip.", required = False, min_value = 1)
@@ -796,10 +803,87 @@ class music(commands.Cog):
             )
         await ctx.respond(embed = embed)
 
-    # @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue.")
-    # @discord.option("url", description = "The playlist URL.", required = True)
-    # async def addplaylist(self, url:str):
-    #     pass
+    @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue.")
+    @discord.option("url", description = "The playlist URL.", required = True)
+    @discord.option("start", description = "The index of the song to start from.", required = False, default = 0, min_value = 1)
+    @discord.option("end", description = "The index of the song to end at.", required = False, default = 0, min_value = 1)
+    async def addplaylist(self, ctx, url:str, start:int, end:int):
+        
+        url = YOUTUBE_PLAYLIST_REGEX.match(url)
+        if url:
+            url = url.group(0)
+        else:
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Invalid URL",
+                embedType = "error",
+                command = "addplaylist",
+                fields = [
+                    {"name": "Invalid URL", "value": "Please make sure the URL is a valid YouTube playlist URL.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
+            return
+
+        if ctx.voice_client is None:
+            if ctx.author.voice is None:
+                embed = await embedPackaging.packEmbed(
+                    title = "Error: Not in voice channel",
+                    embedType = "error",
+                    command = "addplaylist",
+                    fields = [
+                        {"name": "You are not in a voice channel.", "value": "Please join a voice channel and try again.\nIf you believe this is an error, please open an issue on [GitHub](https://github.com/3underscoreN/3_n-s-slash-Music-Bot).", "inline": False}
+                    ]
+                )
+                await ctx.respond(embed = embed, ephemeral = True)
+                logging.warn(f"{ctx.author} tried to run /addplaylist but was not in any voice channel while the bot is not connected to any vcs.")
+                return
+            else:
+                await ctx.author.voice.channel.connect()
+        
+        if start > end:
+            if end != 0:
+                embed = await embedPackaging.packEmbed(
+                    title = "Error: Invalid range",
+                    embedType = "error",
+                    command = "addplaylist",
+                    fields = [
+                        {"name": "Invalid range", "value": "The start index cannot be greater than the end index.", "inline": False}
+                    ]
+                )
+                await ctx.respond(embed = embed, ephemeral = True)
+                return
+        
+        p = Playlist(url)
+        await ctx.defer()
+        errorCount = 0
+        successCount = 0
+        if end == 0:
+            end = len(p.video_urls)
+
+        for index, videourl in enumerate(p.video_urls[start: min(end, len(p.video_urls))]):
+            try:
+                item = pafy.new(videourl)
+                if index == 0 and (not ctx.voice_client.is_playing()):
+                    songQueue.current = [item, ctx.author]
+                    source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
+                    ctx.voice_client.play(source, after = lambda e: playnext(ctx))
+                else:
+                    songQueue.add(item, ctx.author)
+                successCount += 1
+            except Exception as e:
+                errorCount += 1
+                logging.error(f"Error while adding {videourl} to queue: {repr(e)}")
+                continue
+
+        embed = await embedPackaging.packEmbed(
+            title = "Success",
+            embedType = "success",
+            command = "addplaylist",
+            fields = [
+                {"name": "Added to queue", "value": f"Number of songs added: `{successCount}`\nNumber of songs failed to add: `{errorCount}`", "inline": False}
+            ]
+        )
+        await ctx.respond(embed = embed)
 
 def setup(bot):
     bot.add_cog(music(bot))
