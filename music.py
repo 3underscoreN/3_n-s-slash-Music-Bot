@@ -92,7 +92,6 @@ class queue():
         self.current = None
         self._repeatMode = 0 # 0 = off, 1 = repeat current, 2 = repeat queue
         self.forceSkip = False
-        self.shuffle = False
 
     def add(self, pafyObject, requester):
         self.queue.append([pafyObject, requester])
@@ -102,39 +101,24 @@ class queue():
         if not self.forceSkip:
             if self._repeatMode == 0:
                 if len(self.queue) > 0:
-                    if not self.shuffle:
-                        self.current = self.queue.pop(0)
-                        return self.current
-                    else:
-                        self.current = self.queue.pop(random.randint(0, len(self.queue) - 1))
-                        return self.current
+                    self.current = self.queue.pop(0)
+                    return self.current
                 else:
                     raise IndexError("There are no more songs in the queue.")
             if self._repeatMode == 1:
                 return self.current
             if self._repeatMode == 2:
                 if len(self.queue) > 0:
-                    if not self.shuffle:
-                        self.current = self.queue.pop(0)
-                        self.queue.append(self.current)
-                        return self.current
-                    else:
-                        position = random.randint(0, len(self.queue) - 1)
-                        self.current = self.queue.pop(position)
-                        self.queue.insert(position, self.current)
-                        return self.current
+                    self.current = self.queue.pop(0)
+                    self.queue.append(self.current)
+                    return self.current
                 else:
                     return self.current
         else:
             if len(self.queue) > 0:
-                if not self.shuffle:
-                    self.current = self.queue.pop(0)
-                    self.forceSkip = False
-                    return self.current
-                else:
-                    self.current = self.queue.pop(random.randint(0, len(self.queue)-1))
-                    self.forceSkip = False
-                    return self.current
+                self.current = self.queue.pop(0)
+                self.forceSkip = False
+                return self.current
             else:
                 self.forceSkip = False
                 self._repeatMode = 0
@@ -142,6 +126,9 @@ class queue():
 
     def remove(self, index):
         return self.queue.pop(index)
+
+    def shuffle(self):
+        random.shuffle(self.queue)
 
     def reset(self):
         self.queue = []
@@ -175,6 +162,8 @@ class queue():
         if value in ["queue", 2, "2", "all", "list"]:
             self._repeatMode = 2
             return
+
+    
 
 songQueue = queue()
 
@@ -778,32 +767,20 @@ class music(commands.Cog):
             )
             await ctx.respond(embed = embed)
 
-    @commands.slash_command(name = "shuffle", description = "Checks the current shuffle mode, or toggle it if one is passed.")
-    @discord.option("mode", description = "Whether shuffle mode should be on or off.", required = False, choices = ["on", "off"])
-    async def shuffle(self, ctx, mode:str):
-        global songQueue
-        if mode == None:
-            embed = await embedPackaging.packEmbed(
-                title = "Shuffle mode",
-                embedType = "info",
-                command = "shuffle",
-                fields = [
-                    {"name":"Current shuffle mode", "value":f"The current shuffle mode is `{'on' if songQueue.shuffle else 'off'}`","inline": False}
-                ]
-            )
-        else:
-            songQueue.shuffle = (True if mode == "on" else False)
-            embed = await embedPackaging.packEmbed(
-                title = "Success",
-                embedType = "success",
-                command = "shuffle",
-                fields = [
-                    {"name":"Shufle mode set", "value":f"The current shuffle mode has been set to `{'on' if songQueue.shuffle else 'off'}`","inline": False}
-                ]
-            )
+    @commands.slash_command(name = "shuffle", description = "Shuffles the queue.")
+    async def shuffle(self, ctx):
+        songQueue.shuffle()
+        embed = await embedPackaging.packEmbed(
+            title = "Success",
+            embedType = "success",
+            command = "shuffle",
+            fields = [
+                {"name": "The playlist has been shuffled.", "value": f"Use `/queue` to take a look at the shuffled queue.", "inline": False}
+            ]
+        )
         await ctx.respond(embed = embed)
 
-    @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue.")
+    @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue. **Please leave the list small.**")
     @discord.option("url", description = "The playlist URL.", required = True)
     @discord.option("start", description = "The index of the song to start from.", required = False, default = 0, min_value = 1)
     @discord.option("end", description = "The index of the song to end at.", required = False, default = 0, min_value = 1)

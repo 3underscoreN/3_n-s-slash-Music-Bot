@@ -61,8 +61,8 @@
         "description":"Searches YouTube for a video and returns results specified by the index. If no index is provided, it will return the first 5 results."
     },
     "shuffle":{
-        "usage":"/shuffle [mode]",
-        "description":"Toggles shuffle mode. If a mode is not provided, it will return the current mode.\nAvailable modes:\n- `off` - Disables shuffle mode.\n- `on` - Enables shuffle mode."
+        "usage":"/shuffle",
+        "description":"Shuffles the queue."
     },
     "addplaylist":{
         "usage":"/addplaylist <url> [start] [end]",
