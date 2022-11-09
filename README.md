@@ -11,13 +11,13 @@ You would need these python packages before you can run this bot:
 * [PyNaCl](https://github.com/pyca/pynacl/)
 * [youtube-dl](https://github.com/ytdl-org/youtube-dl) (Not recommended since it is pretty out of date, check below for alternatives)
 * [youtube_search](https://github.com/joetats/youtube_search)
-
+* pytube
 You would also need ffmpeg installed. 
 
 To install these packages, you can use `pip`:
 ```bash
 $ pip uninstall discord
-$ pip install orjson pafy py-cord PyNaCl youtube-dl youtube-search
+$ pip install orjson pafy py-cord PyNaCl youtube-dl youtube-search pytube
 $ pip install -U "py-cord[voice]"
 
 # Optional for performance
