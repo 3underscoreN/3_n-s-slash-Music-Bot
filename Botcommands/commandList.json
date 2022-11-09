@@ -16,6 +16,8 @@
         "queue",
         "musicsysrun",
         "repeat",
-        "search"
+        "search",
+        "shuffle",
+        "addplaylist"
     ]
 }

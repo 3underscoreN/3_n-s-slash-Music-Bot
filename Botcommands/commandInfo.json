@@ -59,5 +59,13 @@
     "search":{
         "usage":"/search <keyword> [index]",
         "description":"Searches YouTube for a video and returns results specified by the index. If no index is provided, it will return the first 5 results."
+    },
+    "shuffle":{
+        "usage":"/shuffle [mode]",
+        "description":"Toggles shuffle mode. If a mode is not provided, it will return the current mode.\nAvailable modes:\n- `off` - Disables shuffle mode.\n- `on` - Enables shuffle mode."
+    },
+    "addplaylist":{
+        "usage":"/addplaylist <url> [start] [end]",
+        "description":"Adds a playlist with the specified url.\n**Note: Please do NOT use this command with a large playlist. It will take a long time to process.**"
     }
 }
