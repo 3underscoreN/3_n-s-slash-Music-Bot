@@ -548,7 +548,7 @@ class music(commands.Cog):
             for i in range(0, songQueue.length() // 5 + 1):
                 embed = await embedPackaging.packEmbed(
                     title = "Queue",
-                    description = f"Repeat mode: `{songQueue.repeatMode}`\nShuffle mode: `{'on' if songQueue.shuffle else 'off'}`",
+                    description = f"Repeat mode: `{songQueue.repeatMode}`",
                     embedType = "info",
                     command = "queue",
                     fields = [
@@ -560,7 +560,7 @@ class music(commands.Cog):
                         break
                     embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
                         name = f"**{j}**", 
-                        value = f"[{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}", 
+                        value = f"[{songQueue.queue[j][0].title}](https://youtube.com/watch?v={songQueue.queue[j][0].videoid})\nDuration: {songQueue.queue[j][0].duration}\nRequested by: {songQueue.queue[j][1].mention}", 
                         inline = False
                     )
                     embed.set_footer(text = f"queue · Total queue length: {str(datetime.timedelta(seconds = total_queue_length))} · Bot made by 3_n#7069 ") # Overwrites the default footer
