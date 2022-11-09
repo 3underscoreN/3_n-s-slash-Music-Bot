@@ -555,11 +555,11 @@ class music(commands.Cog):
                         {"name": "Now playing", "value": f"[{songQueue.current[0].title}](https://youtube.com/watch?v={songQueue.current[0].videoid})\nDuration: {songQueue.current[0].duration}\nRequested by {songQueue.current[1].mention}", "inline":False}
                     ]
                 )
-                for j in range((5 * i + 1), (5 * i + 6)):
+                for j in range((5 * i), (5 * i + 5)):
                     if j >= songQueue.length():
                         break
                     embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
-                        name = f"**{j}**", 
+                        name = f"**{j + 1}**", 
                         value = f"[{songQueue.queue[j][0].title}](https://youtube.com/watch?v={songQueue.queue[j][0].videoid})\nDuration: {songQueue.queue[j][0].duration}\nRequested by: {songQueue.queue[j][1].mention}", 
                         inline = False
                     )
@@ -785,7 +785,7 @@ class music(commands.Cog):
     @discord.option("start", description = "The index of the song to start from.", required = False, default = 0, min_value = 1)
     @discord.option("end", description = "The index of the song to end at.", required = False, default = 0, min_value = 1)
     async def addplaylist(self, ctx, url:str, start:int, end:int):
-        
+        author = ctx.author
         url = YOUTUBE_PLAYLIST_REGEX.match(url)
         if url:
             url = url.group(0)
@@ -831,21 +831,28 @@ class music(commands.Cog):
                 return
         
         p = Playlist(url)
-        await ctx.defer()
         errorCount = 0
         successCount = 0
         if end == 0:
             end = len(p.video_urls)
-
-        for index, videourl in enumerate(p.video_urls[start: min(end, len(p.video_urls))]):
-            try:
-                item = pafy.new(videourl)
-                if index == 0 and (not ctx.voice_client.is_playing()):
+        
+        await ctx.defer()
+        urls = p.video_urls[start: min(end, len(p.video_urls))]
+        if not ctx.voice_client.is_playing(): # play first available song if the bot is not playing anything
+            while successCount == 0:
+                try:
+                    item = pafy.new(urls.pop(0))
                     songQueue.current = [item, ctx.author]
                     source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
                     ctx.voice_client.play(source, after = lambda e: playnext(ctx))
-                else:
-                    songQueue.add(item, ctx.author)
+                    successCount += 1
+                except:
+                    errorCount += 1
+
+        for videourl in urls: # add songs to queue
+            try:
+                item = pafy.new(videourl)
+                songQueue.add(item, ctx.author)
                 successCount += 1
             except Exception as e:
                 errorCount += 1
