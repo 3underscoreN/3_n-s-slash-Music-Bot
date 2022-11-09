@@ -570,7 +570,7 @@ class music(commands.Cog):
                     if j > songQueue.length():
                         break
                     embed.add_field( # packEmbed returns a discord.Embed() object, so we can use the add_field() method!
-                        name = f"**{j + 1}**", 
+                        name = f"**{j}**", 
                         value = f"[{songQueue.queue[i][0].title}](https://youtube.com/watch?v={songQueue.queue[i][0].videoid})\nDuration: {songQueue.queue[i][0].duration}\nRequested by: {songQueue.queue[i][1].mention}", 
                         inline = False
                     )
