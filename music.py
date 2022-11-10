@@ -13,6 +13,14 @@ from pytube import Playlist
 
 OWNER = int(os.getenv("OWNER"))
 
+if not (key := os.getenv("YT_API_KEY")):
+    print("API key not found. disabling addplaylist commands:")
+    customKey = False
+else:
+    pafy.set_api_key(key)
+    customKey = True
+
+
 # regex that matches youtube url with video id
 YOUTUBE_REGEX = re.compile(r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.{11})")
 # regex that match a youtube playlist url 
@@ -782,10 +790,19 @@ class music(commands.Cog):
 
     @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue. **Please leave the list small.**")
     @discord.option("url", description = "The playlist URL.", required = True)
-    @discord.option("start", description = "The index of the song to start from.", required = False, default = 0, min_value = 1)
-    @discord.option("end", description = "The index of the song to end at.", required = False, default = 0, min_value = 1)
-    async def addplaylist(self, ctx, url:str, start:int, end:int):
-        author = ctx.author
+    async def addplaylist(self, ctx, url:str):
+        if customKey == False:
+            embed = await embedPackaging.packEmbed(
+                title = "Error: No API key",
+                embedType = "error",
+                command = "addplaylist",
+                fields = [
+                    {"name": "No API key", "value": "Please contact the bot owner to provide a YouTube Data API key in order to use this command.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
+            return
+
         url = YOUTUBE_PLAYLIST_REGEX.match(url)
         if url:
             url = url.group(0)
@@ -817,46 +834,37 @@ class music(commands.Cog):
             else:
                 await ctx.author.voice.channel.connect()
         
-        if start > end:
-            if end != 0:
-                embed = await embedPackaging.packEmbed(
-                    title = "Error: Invalid range",
-                    embedType = "error",
-                    command = "addplaylist",
-                    fields = [
-                        {"name": "Invalid range", "value": "The start index cannot be greater than the end index.", "inline": False}
-                    ]
-                )
-                await ctx.respond(embed = embed, ephemeral = True)
-                return
-        
-        p = Playlist(url)
-        errorCount = 0
-        successCount = 0
-        if end == 0:
-            end = len(p.video_urls)
+        try:
+            plist = pafy.get_playlist2(url)
+        except Exception as e:
+            embed = await embedPackaging.packEmbed(
+                title = "Error: Invalid URL",
+                embedType = "error",
+                command = "addplaylist",
+                fields = [
+                    {"name": "Error fetching playlist.", "value": "It can mean that the quota has been used up (aka garbage API). Please contact the bot owner.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
+            logging.error(f"{ctx.author} tried to run /addplaylist but the bot encountered an error while fetching the playlist: {repr(e)}")
+            return
         
         await ctx.defer()
-        urls = p.video_urls[start: min(end, len(p.video_urls))]
-        if not ctx.voice_client.is_playing(): # play first available song if the bot is not playing anything
-            while successCount == 0:
-                try:
-                    item = pafy.new(urls.pop(0))
-                    songQueue.current = [item, ctx.author]
-                    source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
-                    ctx.voice_client.play(source, after = lambda e: playnext(ctx))
-                    successCount += 1
-                except:
-                    errorCount += 1
-
-        for videourl in urls: # add songs to queue
+        successCount = 0; errorCount = 0
+        for item in plist: # add songs to queue
             try:
-                item = pafy.new(videourl)
-                songQueue.add(item, ctx.author)
-                successCount += 1
+                if not ctx.voice_client.is_playing(): # play first available song if the bot is not playing anything
+                    while successCount == 0:
+                        songQueue.current = [item, ctx.author]
+                        source = discord.FFmpegOpusAudio(item.getbestaudio().url, **FFMPEG_OPTIONS)
+                        ctx.voice_client.play(source, after = lambda e: playnext(ctx))
+                        successCount += 1
+                else:
+                    songQueue.add(item, ctx.author)
+                    successCount += 1
             except Exception as e:
                 errorCount += 1
-                logging.error(f"Error while adding {videourl} to queue: {repr(e)}")
+                logging.error(f"Error while adding to queue: {repr(e)}")
                 continue
 
         embed = await embedPackaging.packEmbed(
