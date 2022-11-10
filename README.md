@@ -53,13 +53,16 @@ $ git clone https://github.com/3underscoreN/3_n-s-slash-Music-Bot.git
 ```
 2. Create your own discord bot and fetch your discord token [here](https://discord.com/developers/applications). You also need to obtain your own user ID.
 
-3. Set up these environment variables:
+3. Get a YouTube Data v3 API key for playlist parsing (optional, but if you want to use addplaylist, you need this). You can get one [here](https://developers.google.com/youtube/v3/getting-started).
+
+4. Set up these environment variables:
 ```bash
 $ export TOKEN='<your token here>'
 $ export OWNER='<your user ID here>'
+$ export YOUTUBE_API_KEY='<your youtube api key here>'
 ```
 
-4. Run the bot:
+5. Run the bot:
 ```bash
 $ python3 main.py
 ```
