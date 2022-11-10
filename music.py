@@ -9,7 +9,6 @@ import os
 import datetime
 from main import embedPackaging
 import random
-from pytube import Playlist
 
 OWNER = int(os.getenv("OWNER"))
 
@@ -183,7 +182,11 @@ def playnext(ctx):
         else:
             pass # unable to fetch anything from queue.next()
     except IndexError:
-        pass # no more songs to play
+        logging.warning("All songs in the queue has been played.")# no more songs to play
+    except AttributeError:
+        logging.warning("All songs in the queue has been played.")
+    except Exception as e:
+        raise e
 
 class playButton(PaginatorButton):
     """
@@ -804,6 +807,7 @@ class music(commands.Cog):
             return
 
         url = YOUTUBE_PLAYLIST_REGEX.match(url)
+
         if url:
             url = url.group(0)
         else:
