@@ -12,12 +12,14 @@ import random
 from pytube import Playlist
 
 OWNER = int(os.getenv("OWNER"))
-try:
-    pafy.set_api_key(os.getenv("YT_API_KEY"))
-    customKey = True
-except:
+
+if key := os.getenv("YT_API_KEY"):
     print("API key not found. disabling addplaylist commands:")
     customKey = False
+else:
+    pafy.set_api_key(key)
+    customKey = True
+
 
 # regex that matches youtube url with video id
 YOUTUBE_REGEX = re.compile(r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.{11})")
