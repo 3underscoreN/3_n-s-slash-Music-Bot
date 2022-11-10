@@ -13,7 +13,7 @@ from pytube import Playlist
 
 OWNER = int(os.getenv("OWNER"))
 
-if key := os.getenv("YT_API_KEY"):
+if not (key := os.getenv("YT_API_KEY")):
     print("API key not found. disabling addplaylist commands:")
     customKey = False
 else:
