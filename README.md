@@ -59,7 +59,7 @@ $ git clone https://github.com/3underscoreN/3_n-s-slash-Music-Bot.git
 ```bash
 $ export TOKEN='<your token here>'
 $ export OWNER='<your user ID here>'
-$ export YOUTUBE_API_KEY='<your youtube api key here>'
+$ export YT_API_KEY='<your youtube api key here>'
 ```
 
 5. Run the bot:
