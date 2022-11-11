@@ -1,5 +1,14 @@
 # 3_n's Music Bot (slash command)
- 
+
+### Content
+* [Introduction](#introduction)
+* [Dependencies](#dependencies)
+* [Deploy](#deploy)
+* [Error Handling](#error-handling)
+* [Issues](#issues)
+* [Contribution](#contribution)
+* [License](#license)
+
 ## Introduction
 This is a Discord bot I write in my free time. Following [my last bot](https://github.com/3underscoreN/3_n-s-Music-Bot), since Discord is adding a fancy "slash command" thingy, I decided to rewrite the bot, as well as using new libraries.
 
