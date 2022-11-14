@@ -1,5 +1,14 @@
 # 3_n's Music Bot (slash command)
- 
+
+### Content
+* [Introduction](#introduction)
+* [Dependencies](#dependencies)
+* [Deploy](#deploy)
+* [Error Handling](#error-handling)
+* [Issues](#issues)
+* [Contribution](#contribution)
+* [License](#license)
+
 ## Introduction
 This is a Discord bot I write in my free time. Following [my last bot](https://github.com/3underscoreN/3_n-s-Music-Bot), since Discord is adding a fancy "slash command" thingy, I decided to rewrite the bot, as well as using new libraries.
 
@@ -43,7 +52,7 @@ $ pip install yt-dlp
 ```
 3. Visit the folder and change `import youtube_dl` into `import yt_dlp as youtube_dl` in all of the `.py` files.
 
-If you do not have the ability to deploy the project, an invitation link is available [here](https://discord.com/api/oauth2/authorize?client_id=984461189704732722&permissions=3147776&scope=bot). However, do keep in mind that support for multiple servers is NOT tested and provided "as is".
+If you encountered any problem with this, feel free to join the [Discord server](https://discord.gg/sRgY26cg23) and ask for help.
 
 ## Deploy
 Follow the steps to deploy the bot on your server/computer:
