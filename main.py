@@ -267,6 +267,19 @@ async def help(ctx, command:str):
         )
         await ctx.respond(embed = embed, ephemeral = True)
 
+@bot.event
+async def on_application_command_error(ctx, e):
+    logging.error(f"Error occured in command {ctx.command.name}.\n{repr(e)}")
+    embed = await embedPackaging.packEmbed(
+        title = "An unexpected error has occurred.",
+        embedType = "error",
+        command = ctx.command.name,
+        fields = [
+            {"name": "Please contact the owner of the bot with the following information.", "value": f"`{repr(e)}`", "inline": False}
+        ]
+    )
+    await ctx.respond(embed = embed, ephemeral = True)
+
 bot.load_extension("music")
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ class queue():
         pafyObject is created with `pafy.new()` while requester is a discord.Member object.
     
     current : list
-        Indicates  thre currently playing song.
+        Indicates thre currently playing song.
         A list of [`pafyObject`, `requester`]. 
         pafyObject is created with `pafy.new()` while requester is a discord.Member object.
 
@@ -316,7 +316,7 @@ class skipConfirmView(discord.ui.View):
             command = "skip",
             fields = [
                 {"name": "Skipped", "value": "The current song has been skipped.", "inline": False},
-                {"name": "Repeat Mode", "value": "Repeat mode has NOT changed.", "inline": False},
+                {"name": "Repeat Mode", "value": "Repeat mode is **unchanged**.", "inline": False},
                 {"name": "Requester", "value": f"{self.ctx.author.mention}", "inline": False}
             ]
         )
@@ -331,7 +331,7 @@ class skipConfirmView(discord.ui.View):
             color = 0xffff00,
             command = "skip",
             fields = [
-                {"name": "Cancelled", "value": "Operation cancelled. Nothing has been changed.", "inline": False},
+                {"name": "Cancelled", "value": "Operation cancelled. No changes were made.", "inline": False},
             ]
         )
         await self.message.edit(embed = embed, view = self)
@@ -344,7 +344,7 @@ class skipConfirmView(discord.ui.View):
             color = 0xffff00,
             command = "skip",
             fields = [
-                {"name": "Timed out", "value": "You took too long to respond. The skip has been cancelled.", "inline": False}
+                {"name": "Timed out", "value": "Operation timed out.\nNo changes were made.", "inline": False}
             ]
         )
         await self.message.edit(embed = embed, view = self)
@@ -780,18 +780,29 @@ class music(commands.Cog):
 
     @commands.slash_command(name = "shuffle", description = "Shuffles the queue.")
     async def shuffle(self, ctx):
-        songQueue.shuffle()
-        embed = await embedPackaging.packEmbed(
-            title = "Success",
-            embedType = "success",
-            command = "shuffle",
-            fields = [
-                {"name": "The playlist has been shuffled.", "value": f"Use `/queue` to take a look at the shuffled queue.", "inline": False}
-            ]
-        )
-        await ctx.respond(embed = embed)
+        if songQueue != []:
+            songQueue.shuffle()
+            embed = await embedPackaging.packEmbed(
+                title = "Success",
+                embedType = "success",
+                command = "shuffle",
+                fields = [
+                    {"name": "The playlist has been shuffled.", "value": f"Use `/queue` to take a look at the shuffled queue.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed)
+        else:
+            embed = await embedPackaging.packEmbed(
+                title = "Error: No Song in Queue",
+                embedType = "error",
+                commands = "shuffle",
+                fields = [
+                    {"name": "The queue is empty.", "value": "Please add a song with `/play` to the queue before shuffling.", "inline": False}
+                ]
+            )
+            await ctx.respond(embed = embed, ephemeral = True)
 
-    @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue. **Please leave the list small.**")
+    @commands.slash_command(name = "addplaylist", description = "Add a playlist to the queue. Try your best to make the playlist short.")
     @discord.option("url", description = "The playlist URL.", required = True)
     async def addplaylist(self, ctx, url:str):
         if customKey == False:
