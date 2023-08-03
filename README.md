@@ -93,6 +93,24 @@ discord.errors.ClientException: ffmpeg was not found.
 Please ensure ffmpeg is **installed** and **added to your PATH**. Installation of ffmpeg differs from platform to platform, and you can find the installation guide [here](https://ffmpeg.org/download.html).
 
 ## Issues
+
+0. When I try to play music, the bot responds the following:
+```
+ApplicationCommandInvokeError("Application Command raised an exception: TypeError: unsupported operand type(s) for *: 'NoneType' and 'int'")
+```
+Answer: This is caused by line 107 of `backend_youtube_dl.py` in `pafy`:
+```python
+self._rawbitrate = info.get('abr', 0) * 1024
+```
+To fix this, you can change it to:
+```python
+    if temp_abr := info.get('abr', 0):
+        self._rawbitrate = temp_abr * 1024
+    else:
+        self._rawbitrate = 0
+```
+Refer to issue [#5](/../../issues/5) for more details.
+
 If you encountered any undesirable behaviour, please open an issue on this repository.
 
 ## Contribution
