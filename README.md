@@ -94,7 +94,7 @@ Please ensure ffmpeg is **installed** and **added to your PATH**. Installation o
 
 ## Issues
 
-0. When I try to play music, the bot responds the following:
+1. When I try to play music, the bot responds the following:
 ```
 ApplicationCommandInvokeError("Application Command raised an exception: TypeError: unsupported operand type(s) for *: 'NoneType' and 'int'")
 ```
